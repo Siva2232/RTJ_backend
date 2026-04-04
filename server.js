@@ -29,7 +29,7 @@ app.use(
   cors({
     origin: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim())
-      : ['http://localhost:5173', 'http://localhost:3000'],
+      : ['http://localhost:5173', 'http://localhost:3000', 'https://rtjmotors.netlify.app'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -46,7 +46,7 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 }
 
-// ─── Health Check ──────────────────────────────────────────────────────────────
+// ─── Health Check & Root ──────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -56,6 +56,17 @@ app.get('/health', (req, res) => {
       timestamp: new Date().toISOString(),
     },
     message: 'Server is running',
+  });
+});
+
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: 'RTJ Motors API is live',
+    endpoints: {
+      health: '/health',
+      api: '/api'
+    }
   });
 });
 
