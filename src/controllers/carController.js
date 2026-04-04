@@ -4,7 +4,7 @@ const { sendSuccess } = require('../utils/ApiResponse');
 const { getCarWithDetails, buildCarQuery, enrichCar } = require('../services/carService');
 const { logActivity } = require('../services/activityService');
 const { sendNotification } = require('../services/notificationService');
-const { exportCarsToExcel } = require('../services/exportService');
+const { exportCarsToExcel, exportPeriodReport } = require('../services/exportService');
 
 // ─── GET /api/cars ────────────────────────────────────────────────────────────
 const getAllCars = async (req, res) => {
@@ -440,6 +440,53 @@ const exportExcel = async (req, res) => {
   res.end();
 };
 
+// ─── GET /api/cars/export/report?period=weekly|monthly|yearly ────────────────
+const exportReport = async (req, res) => {
+  const period = ['weekly', 'monthly', 'yearly'].includes(req.query.period)
+    ? req.query.period
+    : 'monthly';
+
+  const now = new Date();
+  const from = new Date();
+
+  if (period === 'weekly') {
+    from.setDate(now.getDate() - 7);
+    from.setHours(0, 0, 0, 0);
+  } else if (period === 'monthly') {
+    from.setDate(1);
+    from.setHours(0, 0, 0, 0);
+  } else {
+    from.setMonth(0, 1);
+    from.setHours(0, 0, 0, 0);
+  }
+
+  const [soldCarsRaw, allCarsRaw] = await Promise.all([
+    Car.find({ isDeleted: false, status: 'sold', soldDate: { $gte: from, $lte: now } })
+      .populate('soldBy', 'name')
+      .lean(),
+    Car.find({
+      isDeleted: false,
+      $or: [
+        { purchaseDate: { $gte: from, $lte: now } },
+        { createdAt:    { $gte: from, $lte: now } },
+      ],
+    }).lean(),
+  ]);
+
+  const soldCars = soldCarsRaw.map(enrichCar);
+  const allCars  = allCarsRaw.map(enrichCar);
+
+  const periodLabel = period.charAt(0).toUpperCase() + period.slice(1);
+  const filename = `${periodLabel}-Report-${now.toISOString().slice(0, 10)}.xlsx`;
+
+  const workbook = await exportPeriodReport(soldCars, allCars, period, from, now);
+
+  res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+  await workbook.xlsx.write(res);
+  res.end();
+};
+
 module.exports = {
   getAllCars,
   getCarById,
@@ -454,4 +501,5 @@ module.exports = {
   sellCar,
   approveSale,
   exportExcel,
+  exportReport,
 };

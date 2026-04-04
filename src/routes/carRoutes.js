@@ -13,6 +13,7 @@ const {
   sellCar,
   approveSale,
   exportExcel,
+  exportReport,
 } = require('../controllers/carController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware');
 const {
@@ -23,8 +24,9 @@ const {
 } = require('../validators/carValidator');
 const { uploadCarImages, uploadRepairMedia, uploadBillImage } = require('../middleware/uploadMiddleware');
 
-// ── Export route (must come before /:id to avoid collision) ──────────────────
+// ── Export routes (must come before /:id to avoid collision) ─────────────────
 router.get('/export/excel', protect, exportExcel);
+router.get('/export/report', protect, exportReport);
 
 // ── Base car routes ───────────────────────────────────────────────────────────
 router
