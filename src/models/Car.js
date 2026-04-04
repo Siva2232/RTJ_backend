@@ -55,6 +55,23 @@ const carSchema = new mongoose.Schema(
       required: [true, 'Purchase price is required'],
       min: 0,
     },
+    paymentMode: {
+      type: String,
+      enum: ['cash', 'gpay', 'neft', 'other'],
+      default: 'cash',
+    },
+    utrNumber: {
+      type: String,
+      trim: true,
+    },
+    paymentDate: {
+      type: Date,
+      default: Date.now,
+    },
+    paymentDescription: {
+      type: String,
+      trim: true,
+    },
     purchasedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',

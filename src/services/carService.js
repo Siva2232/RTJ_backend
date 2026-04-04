@@ -26,7 +26,26 @@ const buildCarQuery = (queryParams = {}) => {
   const { status, search, minPrice, maxPrice, sortBy } = queryParams;
   const filter = { isDeleted: false };
 
-  if (status && status !== 'all') filter.status = status;
+  if (status && status === 'junk') {
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+    filter.status = { $ne: 'sold' };
+    filter.$or = [
+      { purchaseDate: { $lte: oneYearAgo } },
+      { purchaseDate: { $exists: false }, createdAt: { $lte: oneYearAgo } }
+    ];
+  } else if (status && (status === '1m' || status === '3m' || status === '6m')) {
+    const months = parseInt(status);
+    const dateLimit = new Date();
+    dateLimit.setMonth(dateLimit.getMonth() - months);
+    filter.status = { $ne: 'sold' };
+    filter.$or = [
+      { purchaseDate: { $lte: dateLimit } },
+      { purchaseDate: { $exists: false }, createdAt: { $lte: dateLimit } }
+    ];
+  } else if (status && status !== 'all') {
+    filter.status = status;
+  }
 
   if (search) {
     const rx = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');

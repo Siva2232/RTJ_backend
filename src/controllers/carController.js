@@ -55,7 +55,9 @@ const getCarById = async (req, res) => {
 const createCar = async (req, res) => {
   const {
     brand, model, year, fuelType, ownerType,
-    registrationNumber, chassisNumber, mileage, purchasePrice, purchaseDate,
+    registrationNumber, chassisNumber, mileage, 
+    purchasePrice, purchaseDate, paymentMode, utrNumber,
+    paymentDate, paymentDescription,
   } = req.body;
 
   const regNo = registrationNumber.toUpperCase();
@@ -93,6 +95,10 @@ const createCar = async (req, res) => {
     chassisNumber,
     mileage: Number(mileage) || 0,
     purchasePrice: Number(purchasePrice),
+    paymentMode,
+    utrNumber,
+    paymentDate: paymentDate || new Date(),
+    paymentDescription,
     purchasedBy: req.user._id,
     purchaseDate: purchaseDate || new Date(),
     images: imageUrls,
