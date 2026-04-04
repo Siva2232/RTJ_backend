@@ -29,7 +29,7 @@ app.use(
   cors({
     origin: process.env.ALLOWED_ORIGINS
       ? process.env.ALLOWED_ORIGINS.split(',').map((s) => s.trim())
-      : ['http://localhost:5173', 'http://localhost:3000', 'https://rtjmotors.netlify.app'],
+      : ['http://localhost:5173', 'http://localhost:3000', 'https://vtjmotors.netlify.app'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
