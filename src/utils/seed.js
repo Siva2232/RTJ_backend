@@ -9,9 +9,9 @@ const User = require('../models/User');
 const connectDB = require('../config/db');
 
 const DEMO_USERS = [
-  { name: 'jaison',    email: 'admin@rtjmotors.com',    password: 'admin123',    role: 'admin'    },
-  { name: 'Sinto', email: 'purchase@rtjmotors.com', password: 'purchase123', role: 'purchase' },
-  { name: 'renjini',    email: 'sales@rtjmotors.com',    password: 'sales123',    role: 'sales'    },
+  { name: 'jaison',    email: 'admin@vtjmotors.com',    password: 'admin123',    role: 'admin'    },
+  { name: 'Sinto', email: 'purchase@vtjmotors.com', password: 'purchase123', role: 'purchase' },
+  { name: 'renjini',    email: 'sales@vtjmotors.com',    password: 'sales123',    role: 'sales'    },
 ];
 
 const seed = async () => {

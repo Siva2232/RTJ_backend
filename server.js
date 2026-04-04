@@ -62,7 +62,7 @@ app.get('/health', (req, res) => {
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'RTJ Motors API is live',
+    message: 'VTJ Motors API is live',
     endpoints: {
       health: '/health',
       api: '/api'
