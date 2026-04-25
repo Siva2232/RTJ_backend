@@ -283,12 +283,28 @@ const markReady = async (req, res) => {
     }
   }
 
+  // Set repair total amount and create repair cost entry
   if (req.body.repairTotalAmount) {
     car.repairTotalAmount = Number(req.body.repairTotalAmount);
+
+    // Create a repair cost entry in repairCosts array for history tracking
+    const repairTitle = req.body.repairDescription || 'Repair & Maintenance';
+    const newRepairCost = {
+      title: repairTitle,
+      amount: Number(req.body.repairTotalAmount),
+      addedBy: req.user._id,
+      date: new Date(),
+    };
+    
+    console.log('Adding repair cost:', newRepairCost);
+    car.repairCosts.push(newRepairCost);
+    console.log('RepairCosts after push:', car.repairCosts);
   }
 
   car.status = 'ready';
   await car.save();
+  
+  console.log('Car after save:', car.repairCosts);
 
   await logActivity({
     user: req.user,
