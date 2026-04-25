@@ -273,38 +273,35 @@ const markReady = async (req, res) => {
   if (!car) throw new ApiError(404, 'Car not found');
   if (car.status === 'sold') throw new ApiError(400, 'Car is already sold');
 
-  // Handle Cloudinary-uploaded files
+  // Handle uploaded files - convert file paths to URLs
   if (req.files) {
     if (req.files.carImage?.[0]) {
-      car.repairImages = [req.files.carImage[0].path];
+      // Extract filename and subfolder from path, then construct URL
+      const carImageFilename = req.files.carImage[0].filename;
+      car.repairImages = [`/uploads/repairs/${carImageFilename}`];
     }
     if (req.files.bills?.length) {
-      car.repairBills = req.files.bills.map((f) => f.path);
+      // Map bill paths to URLs
+      car.repairBills = req.files.bills.map((f) => `/uploads/repairs/${f.filename}`);
     }
   }
 
-  // Set repair total amount and create repair cost entry
+  // Set repair total amount
   if (req.body.repairTotalAmount) {
     car.repairTotalAmount = Number(req.body.repairTotalAmount);
 
     // Create a repair cost entry in repairCosts array for history tracking
     const repairTitle = req.body.repairDescription || 'Repair & Maintenance';
-    const newRepairCost = {
+    car.repairCosts.push({
       title: repairTitle,
       amount: Number(req.body.repairTotalAmount),
       addedBy: req.user._id,
       date: new Date(),
-    };
-    
-    console.log('Adding repair cost:', newRepairCost);
-    car.repairCosts.push(newRepairCost);
-    console.log('RepairCosts after push:', car.repairCosts);
+    });
   }
 
   car.status = 'ready';
   await car.save();
-  
-  console.log('Car after save:', car.repairCosts);
 
   await logActivity({
     user: req.user,

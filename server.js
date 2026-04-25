@@ -84,10 +84,19 @@ app.use('/api/auth/register', authLimiter);
 // ─── Static Files ──────────────────────────────────────────────────────────────
 // Override helmet's Cross-Origin-Resource-Policy for uploaded files so browsers
 // on different origins (e.g. localhost:5173) can load images.
+//
+// Handle different deployment structures:
+// - Local dev: __dirname = RTJ_backend, files at RTJ_backend/src/uploads
+// - Render prod: __dirname = /opt/render/project/src, files at /opt/render/project/src/uploads
+//   (because Render deploys to src folder and uploadMiddleware saves to ../uploads relative to middleware dir)
+const uploadsPath = __dirname.endsWith('src')
+  ? path.join(__dirname, 'uploads')  // Render: /opt/render/project/src/uploads
+  : path.join(__dirname, 'src', 'uploads');  // Local: RTJ_backend/src/uploads
+
 app.use('/uploads', (req, res, next) => {
   res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
   next();
-}, express.static(path.join(__dirname, 'src/uploads')));
+}, express.static(uploadsPath));
 
 app.use('/api', apiLimiter);
 
