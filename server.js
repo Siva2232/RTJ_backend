@@ -20,6 +20,11 @@ const notificationRoutes = require('./src/routes/notificationRoutes');
 // ─── App Setup ─────────────────────────────────────────────────────────────────
 const app = express();
 
+// ─── Trust Proxy ───────────────────────────────────────────────────────────────
+// Required for rate limiting behind reverse proxy (e.g., Render)
+// Allows express-rate-limit to accurately identify users via X-Forwarded-For header
+app.set('trust proxy', 1);
+
 // ─── Database ──────────────────────────────────────────────────────────────────
 connectDB();
 
