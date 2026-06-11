@@ -58,6 +58,10 @@ const globalErrorHandler = (err, req, res, next) => {
 // ─── 404 Handler ─────────────────────────────────────────────────────────────
 
 const notFound = (req, res, next) => {
+  // Static upload misses are handled by express.static — should not reach here
+  if (req.originalUrl.startsWith('/uploads/')) {
+    return res.status(404).end();
+  }
   next(new ApiError(404, `Route not found: ${req.method} ${req.originalUrl}`));
 };
 

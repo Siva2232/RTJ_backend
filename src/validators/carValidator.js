@@ -28,6 +28,17 @@ const addCarRules = [
     .trim()
     .notEmpty()
     .withMessage('Registration number is required'),
+  body('color')
+    .trim()
+    .notEmpty()
+    .withMessage('Car color is required'),
+  body('purchaseCustomerName')
+    .trim()
+    .notEmpty()
+    .withMessage('Seller customer name is required'),
+  body('purchaseCustomerPhone')
+    .matches(/^\d{10}$/)
+    .withMessage('Seller customer phone must be a valid 10-digit number'),
   body('mileage')
     .optional()
     .isFloat({ min: 0 })
@@ -48,13 +59,34 @@ const sellCarRules = [
   body('sellingPrice')
     .isFloat({ min: 1 })
     .withMessage('Selling price must be greater than 0'),
-  body('customerDetails.name')
+  body('customerName')
     .trim()
     .notEmpty()
     .withMessage('Customer name is required'),
-  body('customerDetails.phone')
+  body('customerPhone')
     .matches(/^\d{10}$/)
     .withMessage('Customer phone must be a valid 10-digit number'),
+  body('aadharNumber')
+    .matches(/^\d{12}$/)
+    .withMessage('Aadhar number must be 12 digits'),
+  body('panNumber')
+    .matches(/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/i)
+    .withMessage('PAN must be valid (e.g. ABCDE1234F)'),
+  body('bankAccountHolder')
+    .trim()
+    .notEmpty()
+    .withMessage('Bank account holder name is required'),
+  body('bankAccountNumber')
+    .trim()
+    .notEmpty()
+    .withMessage('Bank account number is required'),
+  body('bankName')
+    .trim()
+    .notEmpty()
+    .withMessage('Bank name is required'),
+  body('bankIfsc')
+    .matches(/^[A-Z]{4}0[A-Z0-9]{6}$/i)
+    .withMessage('IFSC code must be valid'),
 ];
 
 module.exports = { validate, addCarRules, addExpenseRules, sellCarRules };

@@ -7,6 +7,7 @@ const getCarWithDetails = async (carId) => {
   return Car.findOne({ _id: carId, isDeleted: false })
     .populate('purchasedBy', 'name email role')
     .populate('soldBy', 'name email role')
+    .populate('saleApproval.requestedBy', 'name email role')
     .populate('purchaseExpenses.addedBy', 'name role')
     .populate('repairCosts.addedBy', 'name role')
     .lean({ virtuals: true });

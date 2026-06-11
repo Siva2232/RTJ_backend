@@ -2,6 +2,21 @@ const mongoose = require('mongoose');
 
 // ─── Sub-schemas ──────────────────────────────────────────────────────────────
 
+const saleCustomerDetailsSchema = {
+  name: { type: String, trim: true },
+  phone: { type: String, trim: true },
+  address: { type: String, trim: true },
+  aadharNumber: { type: String, trim: true },
+  aadharDocument: { type: String },
+  panNumber: { type: String, trim: true },
+  panDocument: { type: String },
+  bankAccountHolder: { type: String, trim: true },
+  bankAccountNumber: { type: String, trim: true },
+  bankName: { type: String, trim: true },
+  bankIfsc: { type: String, trim: true },
+  rcBookDocuments: [{ type: String }],
+};
+
 const expenseSchema = new mongoose.Schema(
   {
     title: { type: String, required: true, trim: true },
@@ -44,6 +59,7 @@ const carSchema = new mongoose.Schema(
       trim: true,
     },
     mileage: { type: Number, default: 0 }, // Added: how many kilometers car runs
+    color: { type: String, trim: true },
     chassisNumber: { type: String, trim: true },
     images: [{ type: String }],        // Cloudinary URLs — car photos
     repairImages: [{ type: String }],   // After-repair photos
@@ -78,6 +94,10 @@ const carSchema = new mongoose.Schema(
       required: true,
     },
     purchaseDate: { type: Date, default: Date.now },
+    purchaseCustomerDetails: {
+      name: { type: String, trim: true },
+      phone: { type: String, trim: true },
+    },
 
     // ── Expenses ──────────────────────────────────────────────────────────────
     purchaseExpenses: [expenseSchema], // Transport, food, fuel, etc.
@@ -88,11 +108,7 @@ const carSchema = new mongoose.Schema(
     sellingPrice: { type: Number, default: 0 },
     soldBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     soldDate: { type: Date },
-    customerDetails: {
-      name: { type: String, trim: true },
-      phone: { type: String },
-      address: { type: String },
-    },
+    customerDetails: saleCustomerDetailsSchema,
 
     // ── Status ────────────────────────────────────────────────────────────────
     status: {
@@ -107,11 +123,7 @@ const carSchema = new mongoose.Schema(
       requestedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       requestedAt: { type: Date },
       requestedPrice: { type: Number },
-      customerDetails: {
-        name: { type: String, trim: true },
-        phone: { type: String },
-        address: { type: String },
-      },
+      customerDetails: saleCustomerDetailsSchema,
       approvedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
       approvedAt: { type: Date },
     },

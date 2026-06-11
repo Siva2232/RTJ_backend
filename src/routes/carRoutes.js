@@ -22,7 +22,7 @@ const {
   sellCarRules,
   validate,
 } = require('../validators/carValidator');
-const { uploadCarImages, uploadRepairMedia, uploadBillImage } = require('../middleware/uploadMiddleware');
+const { uploadCarImages, uploadRepairMedia, uploadBillImage, uploadSaleDocuments } = require('../middleware/uploadMiddleware');
 
 // ── Export routes (must come before /:id to avoid collision) ─────────────────
 router.get('/export/excel', protect, exportExcel);
@@ -89,6 +89,7 @@ router.post(
   '/:id/sell',
   protect,
   authorizeRoles('admin', 'sales'),
+  uploadSaleDocuments,
   sellCarRules,
   validate,
   sellCar

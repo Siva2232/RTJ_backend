@@ -32,6 +32,7 @@ connectDB();
 app.use(helmet());
 const allowedOrigins = [
   'http://localhost:5173',
+  'http://localhost:5174',
   'http://localhost:3000',
   'https://vtjmotors.netlify.app',
   ...(process.env.ALLOWED_ORIGINS
@@ -94,14 +95,22 @@ app.use('/api/auth/register', authLimiter);
 // - Local dev: __dirname = RTJ_backend, files at RTJ_backend/src/uploads
 // - Render prod: __dirname = /opt/render/project/src, files at /opt/render/project/src/uploads
 //   (because Render deploys to src folder and uploadMiddleware saves to ../uploads relative to middleware dir)
-const uploadsPath = __dirname.endsWith('src')
-  ? path.join(__dirname, 'uploads')  // Render: /opt/render/project/src/uploads
-  : path.join(__dirname, 'src', 'uploads');  // Local: RTJ_backend/src/uploads
+const uploadsPath = path.join(__dirname, 'src', 'uploads');
 
-app.use('/uploads', (req, res, next) => {
-  res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
-  next();
-}, express.static(uploadsPath));
+if (process.env.NODE_ENV !== 'test') {
+  console.log(`📁 Uploads directory: ${uploadsPath}`);
+}
+
+// fallthrough: false — missing files return plain 404, not API "Route not found" errors
+app.use(
+  '/uploads',
+  express.static(uploadsPath, {
+    fallthrough: false,
+    setHeaders(res) {
+      res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    },
+  })
+);
 
 app.use('/api', apiLimiter);
 

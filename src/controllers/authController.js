@@ -4,6 +4,17 @@ const { sendSuccess } = require('../utils/ApiResponse');
 const { generateToken } = require('../utils/generateToken');
 const { logActivity } = require('../services/activityService');
 
+const formatUser = (user) => ({
+  id: user._id,
+  _id: user._id,
+  name: user.name,
+  email: user.email,
+  role: user.role,
+  isActive: user.isActive,
+  profilePicture: user.profilePicture || null,
+  createdAt: user.createdAt,
+});
+
 // ─── POST /api/auth/login ─────────────────────────────────────────────────────
 const login = async (req, res) => {
   const { email, password } = req.body;
@@ -27,12 +38,7 @@ const login = async (req, res) => {
     200,
     {
       token,
-      user: {
-        id:    user._id,
-        name:  user.name,
-        email: user.email,
-        role:  user.role,
-      },
+      user: formatUser(user),
     },
     'Login successful'
   );
@@ -58,12 +64,7 @@ const register = async (req, res) => {
     res,
     201,
     {
-      user: {
-        id:    user._id,
-        name:  user.name,
-        email: user.email,
-        role:  user.role,
-      },
+      user: formatUser(user),
     },
     'User created successfully'
   );
@@ -71,21 +72,7 @@ const register = async (req, res) => {
 
 // ─── GET /api/auth/me ─────────────────────────────────────────────────────────
 const getMe = async (req, res) => {
-  return sendSuccess(
-    res,
-    200,
-    {
-      user: {
-        id:        req.user._id,
-        name:      req.user.name,
-        email:     req.user.email,
-        role:      req.user.role,
-        isActive:  req.user.isActive,
-        createdAt: req.user.createdAt,
-      },
-    },
-    'Profile fetched'
-  );
+  return sendSuccess(res, 200, { user: formatUser(req.user) }, 'Profile fetched');
 };
 
 // ─── GET /api/auth/users (admin only) ────────────────────────────────────────
@@ -112,4 +99,38 @@ const updateUser = async (req, res) => {
   return sendSuccess(res, 200, { user }, 'User updated successfully');
 };
 
-module.exports = { login, register, getMe, getAllUsers, updateUser };
+// ─── PATCH /api/auth/profile (logged-in user) ──────────────────────────────────
+const updateProfile = async (req, res) => {
+  const user = await User.findById(req.user._id).select('+password');
+  if (!user) throw new ApiError(404, 'User not found');
+
+  const { name, currentPassword, newPassword } = req.body;
+
+  if (name && name.trim()) user.name = name.trim();
+
+  if (newPassword) {
+    if (!currentPassword) throw new ApiError(400, 'Current password is required to set a new password');
+    if (!(await user.matchPassword(currentPassword))) {
+      throw new ApiError(401, 'Current password is incorrect');
+    }
+    if (newPassword.length < 6) throw new ApiError(400, 'New password must be at least 6 characters');
+    user.password = newPassword;
+  }
+
+  if (req.file) {
+    user.profilePicture = `/uploads/avatars/${req.file.filename}`;
+  }
+
+  await user.save();
+
+  await logActivity({
+    user,
+    action: 'profile_updated',
+    details: { fields: Object.keys(req.body).filter((k) => req.body[k]) },
+    ipAddress: req.ip,
+  });
+
+  return sendSuccess(res, 200, { user: formatUser(user) }, 'Profile updated successfully');
+};
+
+module.exports = { login, register, getMe, getAllUsers, updateUser, updateProfile };

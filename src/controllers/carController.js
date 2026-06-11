@@ -10,7 +10,7 @@ const { exportCarsToExcel, exportPeriodReport } = require('../services/exportSer
 const getAllCars = async (req, res) => {
   const { filter, sort } = buildCarQuery(req.query);
   const page  = Math.max(1, parseInt(req.query.page)  || 1);
-  const limit = Math.min(100, parseInt(req.query.limit) || 20);
+  const limit = Math.min(500, Math.max(1, parseInt(req.query.limit) || 500));
   const skip  = (page - 1) * limit;
 
   const [total, cars] = await Promise.all([
@@ -18,6 +18,7 @@ const getAllCars = async (req, res) => {
     Car.find(filter)
       .populate('purchasedBy', 'name role')
       .populate('soldBy', 'name role')
+      .populate('saleApproval.requestedBy', 'name role')
       .sort(sort)
       .skip(skip)
       .limit(limit)
@@ -54,10 +55,11 @@ const getCarById = async (req, res) => {
 // ─── POST /api/cars ───────────────────────────────────────────────────────────
 const createCar = async (req, res) => {
   const {
-    brand, model, year, fuelType, ownerType,
+    brand, model, year, fuelType, ownerType, color,
     registrationNumber, chassisNumber, mileage, 
     purchasePrice, purchaseDate, paymentMode, utrNumber,
     paymentDate, paymentDescription,
+    purchaseCustomerName, purchaseCustomerPhone,
   } = req.body;
 
   const regNo = registrationNumber.toUpperCase();
@@ -90,7 +92,7 @@ const createCar = async (req, res) => {
   });
 
   const car = await Car.create({
-    brand, model, year: Number(year), fuelType, ownerType,
+    brand, model, year: Number(year), fuelType, ownerType, color: color?.trim(),
     registrationNumber: regNo,
     chassisNumber,
     mileage: Number(mileage) || 0,
@@ -101,6 +103,10 @@ const createCar = async (req, res) => {
     paymentDescription,
     purchasedBy: req.user._id,
     purchaseDate: purchaseDate || new Date(),
+    purchaseCustomerDetails: {
+      name: purchaseCustomerName?.trim(),
+      phone: purchaseCustomerPhone?.trim(),
+    },
     images: imageUrls,
     purchaseExpenses: processedExpenses,
   });
@@ -318,9 +324,47 @@ const markReady = async (req, res) => {
   return sendSuccess(res, 200, { car }, 'Car marked as ready to sell');
 };
 
+const buildSaleCustomerDetails = (body, files) => {
+  const details = {
+    name: body.customerName?.trim(),
+    phone: body.customerPhone?.trim(),
+    address: body.customerAddress?.trim() || '',
+    aadharNumber: body.aadharNumber?.trim(),
+    panNumber: body.panNumber?.trim()?.toUpperCase(),
+    bankAccountHolder: body.bankAccountHolder?.trim(),
+    bankAccountNumber: body.bankAccountNumber?.trim(),
+    bankName: body.bankName?.trim(),
+    bankIfsc: body.bankIfsc?.trim()?.toUpperCase(),
+  };
+
+  if (files?.aadharDoc?.[0]) {
+    details.aadharDocument = `/uploads/sales/${files.aadharDoc[0].filename}`;
+  }
+  if (files?.panDoc?.[0]) {
+    details.panDocument = `/uploads/sales/${files.panDoc[0].filename}`;
+  }
+  if (files?.rcBooks?.length) {
+    details.rcBookDocuments = files.rcBooks.map((f) => `/uploads/sales/${f.filename}`);
+  }
+
+  return details;
+};
+
 // ─── POST /api/cars/:id/sell (request approval) ───────────────────────────────
 const sellCar = async (req, res) => {
-  const { sellingPrice, customerDetails } = req.body;
+  const { sellingPrice } = req.body;
+
+  if (!req.files?.aadharDoc?.[0]) {
+    throw new ApiError(400, 'Aadhar card document is required');
+  }
+  if (!req.files?.panDoc?.[0]) {
+    throw new ApiError(400, 'PAN card document is required');
+  }
+  if (!req.files?.rcBooks?.length) {
+    throw new ApiError(400, 'RC book document is required');
+  }
+
+  const customerDetails = buildSaleCustomerDetails(req.body, req.files);
 
   const car = await Car.findOne({ _id: req.params.id, isDeleted: false });
   if (!car) throw new ApiError(404, 'Car not found');

@@ -27,7 +27,13 @@ const storage = multer.diskStorage({
     let subfolder = "others";
     if (file.fieldname === "images") subfolder = "cars";
     else if (file.fieldname === "carImage" || file.fieldname === "bills") subfolder = "repairs";
-    else if (file.fieldname === "billImage") subfolder = "expenses";
+    else if (file.fieldname === "billImage" || file.fieldname === "expenseBills") subfolder = "expenses";
+    else if (
+      file.fieldname === "aadharDoc" ||
+      file.fieldname === "panDoc" ||
+      file.fieldname === "rcBooks"
+    ) subfolder = "sales";
+    else if (file.fieldname === "profilePicture") subfolder = "avatars";
 
     const dest = path.join(__dirname, "../uploads", subfolder);
     if (!fs.existsSync(dest)) {
@@ -61,11 +67,43 @@ const uploadRepairMedia = multer({
   { name: "bills", maxCount: 20 },
 ]);
 
-/** Upload a single bill image for an expense */
+/** Upload a single bill image/PDF for an expense */
 const uploadBillImage = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB
 }).single("billImage");
 
-module.exports = { uploadCarImages, uploadRepairMedia, uploadBillImage };
+/** Sale documents — Aadhar, PAN, RC books */
+const uploadSaleDocuments = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: 5 * 1024 * 1024 },
+}).fields([
+  { name: "aadharDoc", maxCount: 1 },
+  { name: "panDoc", maxCount: 1 },
+  { name: "rcBooks", maxCount: 5 },
+]);
+
+const imageOnlyFilter = (req, file, cb) => {
+  if (["image/jpeg", "image/jpg", "image/png", "image/webp"].includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new ApiError(400, "Only JPEG, PNG, and WEBP images are allowed."), false);
+  }
+};
+
+/** Profile avatar — single image */
+const uploadProfilePicture = multer({
+  storage,
+  fileFilter: imageOnlyFilter,
+  limits: { fileSize: 2 * 1024 * 1024 },
+}).single("profilePicture");
+
+module.exports = {
+  uploadCarImages,
+  uploadRepairMedia,
+  uploadBillImage,
+  uploadSaleDocuments,
+  uploadProfilePicture,
+};
